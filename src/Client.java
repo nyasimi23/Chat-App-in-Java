@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
+import java.net.UnknownHostException;
 import java.util.Scanner;
 
 public class Client {
@@ -31,15 +32,15 @@ public class Client {
             bufferedWriter.newLine();
             bufferedWriter.flush();
 
-            Scanner scanner = new Scanner(System.in);
+            try (Scanner scanner = new Scanner(System.in)) {
+                while(socket.isConnected()) {
+                    String messageToSend = scanner.nextLine();
+                    bufferedWriter.write(username + ": " + messageToSend);
+                    bufferedWriter.newLine();
+                    bufferedWriter.flush();
 
-            while(socket.isConnected()) {
-                String messageToSend = scanner.nextLine();
-                bufferedWriter.write(username + ": " + messageToSend);
-                bufferedWriter.newLine();
-                bufferedWriter.flush();
 
-
+                }
             }
         } catch (IOException e) {
             closeEverything(socket, bufferedReader,bufferedWriter);
@@ -64,7 +65,7 @@ public class Client {
                     }
                 }
             }
-        });
+        }).start();
     }
 
 
@@ -85,12 +86,16 @@ public class Client {
         }
     }
 
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Enter your username for the group chat: ");
-        String username = scanner.nextLine();
+    public static void main(String[] args) throws UnknownHostException, IOException {
+        try (Scanner scanner = new Scanner(System.in)) {
+            System.out.println("Enter your username for the group chat: ");
+            String username = scanner.nextLine();
 
-        Socket socket = new Socket("localhost", 1234);
+            Socket socket = new Socket("localhost",1234);
+            Client client = new Client(socket, username);
+            client.listenForMessage();
+            client.sendMessage();
+        }
         
     }
 
